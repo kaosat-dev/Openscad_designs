@@ -52,12 +52,15 @@ platform_holes_y_dist = 21;//28;//2 ->-26
 platform_holes_y_dist2 = -2;//28;//2 ->-26
 
 belt_pos = -15;
-belt_holder_width=23.5;
+belt_holder_width=24.5;
 belt_holder_height=5;
 
 belt_width =6;
-belt_clamp_holes_spacing=33;
-belt_clamp_holes_dist=belt_width+bolt_dia+1;
+belt_thickness=1.95;
+belt_dist =10.95;//7
+belt_clamp_holes_spacing=30;
+belt_clamp_holes_extra=3;
+belt_clamp_holes_dist=belt_width+bolt_dia+belt_clamp_holes_extra*2;
 echo("belt_clamp_holes_dist", belt_clamp_holes_dist);
 
 
@@ -82,14 +85,14 @@ duct_nut_dist =10;
 //%rotate([0,0,270]) import_stl("tripple_bearing_platform_back.stl");
 //%translate([0,-4.8,15]) import_stl("/home/ckaos/GraphX/data/reprappro-Huxley/Print-Huxley/Individual-STLs/nozzle-mounting.stl");
 
-//%belt_clamper();
-translate([0,0,22.5])hot_end_holder();
+belt_clamper();
+//translate([0,0,22.5])hot_end_holder();
 //translate([0,-block_length/2-5,32.5]) rotate([90,0,0]) duct();
 
 
 
 
-module hot_end_holder(thickness=20)
+module hot_end_holder(thickness=11, air_duct=false)
 {
 	lat_hole_b_lng = hot_end_holder_hole_length-hot_end_holder_hole_width;
 
@@ -99,7 +102,7 @@ module hot_end_holder(thickness=20)
 	
 	bowden_nut_offset =  bowden_holder_lng-bowden_nut_height;
 
-	coolers_smooth=25;
+	coolers_smooth=100;
 	coolers_top = hot_end_top -hot_end_upper_length-hot_end_groove_length- groove_bottom_to_coolers-cooler_height/2;
 
 	duct_air_conduit_lng= block_length - hot_end_top -hot_end_upper_length- hot_end_groove_length-groove_bottom_to_coolers;
@@ -132,35 +135,55 @@ module hot_end_holder(thickness=20)
 	
 
 		//fan duct join holes
-		translate([0,-block_length/2+duct_air_conduit_lng/2,thickness/2])
-		rotate([90,0,0])
-		difference()
+		if (air_duct)
 		{
+			translate([0,-block_length/2+duct_air_conduit_lng/2,thickness/2])
+			rotate([90,0,0])
 			difference()
 			{
-				cylinder(h=duct_air_conduit_lng+0.1, r=slit_od/2,$fn=24, center=true);
-				cylinder(h=duct_air_conduit_lng+0.01, r=slit_id/2,$fn=24, center=true);
+				difference()
+				{
+					cylinder(h=duct_air_conduit_lng+0.1, r=slit_od/2,$fn=24, center=true);
+					cylinder(h=duct_air_conduit_lng+0.01, r=slit_id/2,$fn=24, center=true);
+				}
+				cube([5,block_length,thickness+0.1], center=true);	
+				translate([10,0,0]) cube([1,block_length,thickness+0.1], center=true);
+				translate([-10,0,0]) cube([1,block_length,thickness+0.1], center=true);
 			}
-			cube([5,block_length,thickness+0.1], center=true);	
-			translate([10,0,0]) cube([1,block_length,thickness+0.1], center=true);
-			translate([-10,0,0]) cube([1,block_length,thickness+0.1], center=true);
+			//cooling coils
 		}
-		//cooling coils
-		render()
-		{
+
+		translate([0,coolers_top-(cooler_border+cooler_height),thickness/2]) rotate([90,0,0]) 
+		cooling_coil(hot_end_upper_dia/2+1.5, 2, coolers_smooth);
+
+		translate([0,coolers_top-(cooler_border+cooler_height)-4,thickness/2]) rotate([90,0,0]) 
+		 cylinder(h=8, r=hot_end_upper_dia/2+2.5, center=true,$fn=coolers_smooth);
+
+		translate([0,coolers_top-(cooler_border+cooler_height)-8,thickness/2]) rotate([90,0,0]) 
+		cooling_coil(hot_end_upper_dia/2+1.5, 2, coolers_smooth);
+
+		//render()
+		//{
 		difference()
 		{
-		for (i = [0:cooler_count-1])
+			//translate([0,coolers_top-(cooler_border+cooler_height),thickness/2]) rotate([90,0,0]) 
+			//cooling_coil(hot_end_upper_dia/2, 2, coolers_smooth);
+
+			//translate([0,coolers_top-(cooler_border+cooler_height)+10,thickness/2]) rotate([90,0,0]) 
+			//cooling_coil(hot_end_upper_dia/2, 2, coolers_smooth);
+
+	
+		/*for (i = [0:cooler_count-1])
 		{
 			
 			translate([0,coolers_top-i*(cooler_border+cooler_height),thickness/2]) rotate([90,0,0]) 
-			cooling_coil(hot_end_upper_dia/2+8, cooler_height, coolers_smooth);
+			cooling_coil(hot_end_upper_dia/2+5, cooler_height, coolers_smooth);
 		
-		}
-			cube([5,block_length,thickness+0.1], center=true);		
+		}*/
+			//cube([5,block_length,thickness+0.1], center=true);		
 			//translate([10,0,0]) cube([1,block_length,thickness+0.1], center=true);
 		}
-}
+//}
 
 
 
@@ -207,23 +230,6 @@ module hot_end_holder(thickness=20)
 }
 
 
-module cooling_coil(radius=10, circle_dia=1, smoothness=50)
-{
-	rotate_extrude(convexity =10, $fn=smoothness)
-	translate([radius,0,0])
-	circle(r=circle_dia/2 , $fn=smoothness);
-
-	cylinder(h=circle_dia, r=radius, center=true,$fn=32);
-}
-
-module fan(thickness=10.3)
-{
-	difference()
-	{
-		cube([40,40,thickness], center=true);
-		cylinder(h=thickness+0.1, r=38.4/2, center=true,$fn=32);
-	}
-}
 module hot_end_holder_top(thickness=10)
 {
 	lat_hole_b_lng = hot_end_holder_hole_length-hot_end_holder_hole_width;
@@ -275,6 +281,24 @@ module hot_end_holder_top(thickness=10)
 	}
 }
 
+module cooling_coil(radius=10, circle_dia=1, smoothness=50)
+{
+	rotate_extrude(convexity =10, $fn=smoothness)
+	translate([radius,0,0])
+	circle(r=circle_dia/2 , $fn=smoothness);
+
+	cylinder(h=circle_dia, r=radius, center=true,$fn=32);
+}
+
+module fan(thickness=10.3)
+{
+	difference()
+	{
+		cube([40,40,thickness], center=true);
+		cylinder(h=thickness+0.1, r=38.4/2, center=true,$fn=32);
+	}
+}
+
 module duct(duct_id=25, duct_od=40, slit=6, thickness=10)
 {
 	slit_center = (duct_od -duct_id)/2 + duct_id;
@@ -322,44 +346,60 @@ module duct(duct_id=25, duct_od=40, slit=6, thickness=10)
 }
 
 
+
+// 7mm from back to belt
 module belt_clamper(thickness=3)
 {
-	% translate([belt_clamp_holes_spacing/2,-5,belt_pos])  cube([15,2,belt_width], center=true);
-	% translate([-belt_clamp_holes_spacing/2,-5,belt_pos])  cube([15,2,belt_width], center=true);
-	translate([belt_clamp_holes_spacing/2,-5,belt_pos]) rotate([90,0,0])  import_stl("belt_tensioner.stl");
-	translate([-belt_clamp_holes_spacing/2,-5,belt_pos]) rotate([90,0,0])  import_stl("belt_tensioner.stl");
+	belt_holder_pos = -block_length/2+belt_holder_height/2;
+	belt_pos=belt_width/2+belt_dist;
 	difference()
 	{
 		union()
 		{
 			cube([block_width,block_length,thickness], center=true);
-			translate([0,belt_pos-6.4,-belt_holder_width/2-thickness/2]) cube([block_width,belt_holder_height,belt_holder_width], center=true);
+			translate([0,belt_holder_pos,belt_holder_width/2  + thickness/2]) cube([block_width,belt_holder_height,belt_holder_width], center=true);
+			translate([0, -block_length/2+belt_holder_height,thickness/2]) rotate([0,90,180]) cube_rounding(5,block_width-18,0);
 		}
 
 		//bolt holes
-		translate([platform_holes_x_dist,platform_holes_y_dist,0])  cylinder(h=40, r=bolt_dia/2, center=true,$fn=12);
-		translate([-platform_holes_x_dist,platform_holes_y_dist,0])  cylinder(h=40, r=bolt_dia/2, center=true,$fn=12);
+		translate([platform_holes_x_dist,platform_holes_y_dist,0])  cylinder(h=thickness+0.01, r=bolt_dia/2, center=true,$fn=12);
+		translate([-platform_holes_x_dist,platform_holes_y_dist,0])  cylinder(h=thickness+0.01, r=bolt_dia/2, center=true,$fn=12);
 
-		translate([platform_holes_x_dist,platform_holes_y_dist2,0])  cylinder(h=40, r=bolt_dia/2, center=true,$fn=12);
-		translate([-platform_holes_x_dist,platform_holes_y_dist2,0])  cylinder(h=40, r=bolt_dia/2, center=true,$fn=12);
+		translate([platform_holes_x_dist,platform_holes_y_dist2,0])  cylinder(h=thickness+0.01, r=bolt_dia/2, center=true,$fn=12);
+		translate([-platform_holes_x_dist,platform_holes_y_dist2,0])  cylinder(h=thickness+0.01, r=bolt_dia/2, center=true,$fn=12);
 
 		//belt clamp holes
-		translate([belt_clamp_holes_spacing/2,0,-8])  rotate([90,0,0]) cylinder(h=100, r=bolt_dia/2, center=true,$fn=12);
-		translate([-belt_clamp_holes_spacing/2,0,-8])  rotate([90,0,0]) cylinder(h=100, r=bolt_dia/2, center=true,$fn=12);
+		translate([belt_clamp_holes_spacing/2,belt_holder_pos,belt_pos-belt_clamp_holes_dist/2])  rotate([90,0,0]) cylinder(h=10, r=bolt_dia/2, center=true,$fn=12);
+		translate([-belt_clamp_holes_spacing/2,belt_holder_pos,belt_pos-belt_clamp_holes_dist/2])  rotate([90,0,0]) cylinder(h=10, r=bolt_dia/2, center=true,$fn=12);
 
-		translate([belt_clamp_holes_spacing/2,0,-10-belt_clamp_holes_dist])  rotate([90,0,0]) cylinder(h=100, r=bolt_dia/2, center=true,$fn=12);
-		translate([-belt_clamp_holes_spacing/2,0,-10-belt_clamp_holes_dist])  rotate([90,0,0]) cylinder(h=100, r=bolt_dia/2, center=true,$fn=12);
+		translate([belt_clamp_holes_spacing/2,belt_holder_pos,belt_pos+belt_clamp_holes_dist/2])  rotate([90,0,0]) cylinder(h=10, r=bolt_dia/2, center=true,$fn=12);
+		translate([-belt_clamp_holes_spacing/2,belt_holder_pos,belt_pos+belt_clamp_holes_dist/2])  rotate([90,0,0]) cylinder(h=10, r=bolt_dia/2, center=true,$fn=12);
 
 		//corner cuts
 		 translate([-block_width/2,block_length/2+2.8,0])   rotate([0,0,30]) cube([10,10,thickness+0.1], center=true);
 		 translate([block_width/2,block_length/2+2.8,0])   rotate([0,0,-30]) cube([10,10,thickness+0.1], center=true);
 		
 		//rounding
-		translate([block_width/2,-20,-block_length/2-1]) rotate([270,0,0]) cube_rounding(5,10,0.1);
-		translate([-block_width/2,-20,-block_length/2-1]) rotate([270,90,0]) cube_rounding(5,10,0.1);
+		translate([block_width/2,belt_holder_pos,belt_holder_width+thickness/2]) rotate([270,270,0]) cube_rounding(3,belt_holder_height,0.1);
+		translate([-block_width/2,belt_holder_pos,belt_holder_width+thickness/2]) rotate([270,180,0]) cube_rounding(3,belt_holder_height,0.1);
+
+		//lateral cuts
+		translate([block_width/2,platform_holes_y_dist/2-1,0])  cylinder(h=thickness+0.01, r=7, center=true,$fn=40);
+		translate([-block_width/2,platform_holes_y_dist/2-1,0])  cylinder(h=thickness+0.01, r=7, center=true,$fn=40);
+
+		
+		translate([0,belt_holder_pos,belt_pos]) rotate([90,0,0])  cylinder(h=belt_holder_height+0.01, r=7, center=true,$fn=40);
+		translate([0,belt_holder_pos,belt_pos+7]) rotate([90,0,0])  cube([14,14,belt_holder_height+0.1], center=true);
 		
 	}
+
+	//%translate([belt_clamp_holes_spacing/2,-8.3,belt_pos]) rotate([90,0,0])  import_stl("belt_tensioner.stl");
+	//%translate([-belt_clamp_holes_spacing/2,-8.3,belt_pos]) rotate([90,0,0])  import_stl("belt_tensioner.stl");
+
+	% translate([0, belt_holder_pos+4,belt_pos]) cube([100,belt_thickness,belt_width],center = true);
 }
+
+
 
 
 module cube_rounding(width,height, extra=0)
