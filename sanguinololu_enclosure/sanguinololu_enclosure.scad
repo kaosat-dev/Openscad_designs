@@ -34,7 +34,21 @@ $fn=30;
 h_extra = 0.02;
 
 
-enclosure_bottom();
+module rounded_rect(width=5, length=5, height=1, radius=1)
+{
+	rect_width= max(0.001,width-radius*2);
+	rect_lng= max(0.001,length-radius*2);
+	minkowski()
+	{
+		cube([rect_width, rect_lng, height],center=true);
+		cylinder(r=radius, h=height);
+	}
+}
+
+%rounded_rect();
+rounded_rect(radius=1.5);
+
+//enclosure_bottom();
 
 //
 module enclosure_bottom(bottom=true)
