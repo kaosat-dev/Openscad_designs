@@ -52,9 +52,13 @@ central_element_length=bolted_bushing_width+bolted_bushings_y_distance;//DO NOT 
 
 opto_bit=0;
 
+platform_mounts_extra_height=5;
+mount_nut_dia=6.3;
 
 include <includes/lm6uu-holder-slim_v1-1.scad>;
 //translate([smooth_rod_distance/2,bolted_bushings_y_distance/2,3]) lm8uu_holder(true);
+
+//_lateral_mount_element2();
 // //////////////////////////////
 // OpenSCAD SCRIPT
 // //////////////////////////////
@@ -190,6 +194,64 @@ echo(total_dist,angle);
 	
 }
 
+
+module _lateral_mount_element2()
+{
+	//angle betweenbushing outer hole and corresponding platform mount hole
+
+	platform_mount_local_x=platform_mount_x_distance-smooth_rod_distance/2;
+	platform_mount_local_y=0;
+
+	out_bushing_hole_local_x= bolted_bushing_holes_distance/2;
+	out_bushing_hole_local_y=bolted_bushings_y_distance/2;
+	echo(platform_mount_local_x,platform_mount_local_y,out_bushing_hole_local_x,out_bushing_hole_local_y);
+
+	x_dist=abs(platform_mount_local_x-out_bushing_hole_local_x);
+	y_dist=abs(platform_mount_local_y-out_bushing_hole_local_y);
+	echo(x_dist,y_dist);
+
+	total_dist=sqrt(x_dist*x_dist+y_dist*y_dist);
+	angle=atan(y_dist/x_dist);
+echo(total_dist,angle);
+	
+
+difference()
+{
+	union()
+	{
+	translate([0,-bolted_bushings_y_distance/2,0]) _bushing_base_element();
+	translate([0,bolted_bushings_y_distance/2,0]) _bushing_base_element();
+
+	
+
+	//connecting elements for platform
+	 _connector(type=1,y_distance=bolted_bushings_y_distance-bolted_bushing_width,x_distance=bolted_bushing_holes_distance+bolted_bushing_holes_dia);
+	
+
+
+
+
+	translate([-platform_mount_local_x,-platform_mount_local_y,0]) rotate([0,0,angle]) _rounded_arm(length=total_dist-bolted_bushing_holes_dia/2,width=platform_mount_width,flip=false);
+	translate([-platform_mount_local_x,platform_mount_local_y,0]) rotate([0,0,-angle])_rounded_arm(length=total_dist-bolted_bushing_holes_dia/2,width=platform_mount_width,flip=false);
+
+
+
+
+	//element connection
+	translate([(bolted_bushing_length+element_attachment_diff)/2,bolted_bushings_y_distance/2,-thickness/4])  cube([element_attachment_diff,bolted_bushing_width,thickness/2],center=true);
+
+
+	translate([(bolted_bushing_length+element_attachment_diff)/2,-bolted_bushings_y_distance/2,-thickness/4])  cube([element_attachment_diff,bolted_bushing_width,thickness/2],center=true);
+	}
+if(mount_nut_dia>0)
+			{
+				
+				translate([-platform_mount_local_x,0,-1.6]) cylinder(r=mount_nut_dia/2,h=5,center=true, $fn=6);
+				translate([-platform_mount_local_x,0,-1.6]) cylinder(r=platform_mount_hole_dia/2,h=50,center=true);
+			}
+	}
+}
+
 module _bushing_base_element(front=true)
 {
 	
@@ -224,7 +286,7 @@ module _rounded_arm(length=15,width=5,roundtwoends=false,flip=true)
 		
 		union()
 		{
-			cylinder(r=width/2,h=thickness,center=true);
+			translate([0,0,platform_mounts_extra_height/2]) cylinder(r=width/2,h=thickness+platform_mounts_extra_height,center=true);
 			if (flip)
 			{
 				 translate([-(length-width/2)/2,0,0]) cube([length-width/2,width,thickness],center=true);
@@ -233,8 +295,14 @@ module _rounded_arm(length=15,width=5,roundtwoends=false,flip=true)
 			{	
 				translate([length/2,0,0])  cube([length,width,thickness],center=true);
 			}
+			
 		}
-		cylinder(r=platform_mount_hole_dia/2,h=thickness*2,center=true);
+		cylinder(r=platform_mount_hole_dia/2,h=thickness*10,center=true);
+		if(mount_nut_dia>0)
+			{
+				
+				translate([0,0,-1.6]) cylinder(r=mount_nut_dia/2,h=5,center=true, $fn=6);
+			}
 		}
 		
 	}	
