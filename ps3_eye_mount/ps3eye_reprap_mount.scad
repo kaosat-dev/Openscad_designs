@@ -8,6 +8,15 @@
 cam_mount(bottom=true);
 
 
+/*difference()
+{
+	translate([0,0,-3])
+	cube([35,30,10],center =true);
+	snap_on(length=20, width=12, height=4, head_length=5);
+	
+}*/
+
+//snap_on(length=20, width=12, height=4, head_length=5);
 ///////////////////////////////
 // USER PARAMETERS
 ///////////////////////////////
@@ -33,10 +42,12 @@ top_thickness=3;//thcikness of the top plate
 clamp_mount_hole_dia=3.2;
 clamp_mount_hole_distance=8;
 clamp_mount_length=23.2;
-clamp_mount_width=10.0;
+clamp_mount_width=12.0;
 
 mount_holes_lateral_offset=base_dia/2+base_rim+clamp_mount_width/2;
 blocks_width=(mount_holes_lateral_offset+clamp_mount_width/2)*2;
+
+clamp_together_type=1;//0--> holes/nuts and bolts// 1-->special clamp
 // //////////////////////////////
 // OpenSCAD SCRIPT
 // //////////////////////////////
@@ -45,7 +56,19 @@ module cam_mount(bottom=true)
 {
 	if(bottom)
 	{
-		cam_base();
+		difference()
+		{
+			cam_base();
+			
+			translate([0,mount_holes_lateral_offset-1,1.5])  
+			rotate([0,0,180])
+			mirror([0,0,1]) snap_on(length=20, width=7, height=3, head_length=5);
+
+			translate([0,-mount_holes_lateral_offset+1,1.5])  
+			rotate([0,0,180])
+			mirror([0,0,1]) snap_on(length=20, width=7, height=3, head_length=5);
+		}
+		
 	}
 	else
 	{
@@ -77,17 +100,26 @@ module  cam_base()
 		{
 		translate([0,0,bottom_thickness]) 	cut_off(base_dia,shortened_dia,14);
 
+		if (clamp_together_type ==0)
+		{
+		
 		//mount holes
 		translate([clamp_mount_hole_distance,mount_holes_lateral_offset,height/2])  cylinder(r=clamp_mount_hole_dia/2,h=height+0.1,center=true);
 		translate([-clamp_mount_hole_distance,mount_holes_lateral_offset,height/2])  cylinder(r=clamp_mount_hole_dia/2,h=height+0.1,center=true);
 
 		translate([clamp_mount_hole_distance,-mount_holes_lateral_offset,height/2])  cylinder(r=clamp_mount_hole_dia/2,h=height+0.1,center=true);
 		translate([-clamp_mount_hole_distance,-mount_holes_lateral_offset,height/2])  cylinder(r=clamp_mount_hole_dia/2,h=height+0.1,center=true);
+		}
+		else
+		{
+
+		}
 
 		//top mount
 		translate([-latteral_border-clamp_mount_length/2,0,11]) cube([clamp_mount_length*2,blocks_width-latteral_border*2,3],center=true);
 		translate([0,0,9.5]) 	cut_off(base_dia+2,shortened_dia+2,3);
 		}
+
 	}
 }
 
@@ -134,3 +166,32 @@ module cut_off(diameter=50,shortened_dia=40,height=10)
 	}
 }
 
+module snap_on(length=10, width=5, height=5, head_length=2, front_flat_extra=10, downslope=20)
+{
+	slope_length=length-head_length;
+	downslope_base=min(head_length, (sin(downslope)*(height /cos(downslope))));
+
+	xtra =0.01;
+	difference()
+	{
+		union()
+		{
+			cube([length,width,height],center=true);
+			translate([length,0,0]) cube([length,width,height],center=true);
+		}
+		
+		translate([head_length/2,0,0])
+		rotate([0,-90,-90])
+		linear_extrude(height = width+xtra, center = true, convexity = 50, twist = 0)
+		{
+		polygon(points = 
+			[[-height/2,-slope_length/2-downslope_base]
+			,[-height/2-xtra,slope_length/2+xtra]
+			,[height/2+xtra,-slope_length/2-xtra]
+			]
+			,paths = [[0,1,2]]);
+		}
+		
+		
+	}
+}
