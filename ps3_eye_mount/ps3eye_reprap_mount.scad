@@ -60,14 +60,7 @@ module cam_mount(bottom=true)
 		{
 			cam_base();
 			
-			translate([0,mount_holes_lateral_offset-1,1.5])  
-			rotate([0,0,180])
-			mirror([0,0,1]) snap_on(length=20, width=7, height=3, head_length=5);
-
-			translate([0,-mount_holes_lateral_offset+1,1.5])  
-			rotate([0,0,180])
-			mirror([0,0,1]) snap_on(length=20, width=7, height=3, head_length=5);
-		}
+					}
 		
 	}
 	else
@@ -112,6 +105,13 @@ module  cam_base()
 		}
 		else
 		{
+			translate([0,mount_holes_lateral_offset-1,1.5])  
+			rotate([0,0,180])
+			mirror([0,0,1]) snap_on(length=20, width=7, height=3, head_length=5);
+
+			translate([0,-mount_holes_lateral_offset+1,1.5])  
+			rotate([0,0,180])
+			mirror([0,0,1]) snap_on(length=20, width=7, height=3, head_length=5);
 
 		}
 
