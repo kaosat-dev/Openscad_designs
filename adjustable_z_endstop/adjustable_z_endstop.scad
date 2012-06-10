@@ -3,7 +3,6 @@
 // © 2012 by Mark "Ckaos" Moissette
 //http://www.thingiverse.com/thing:24216
 
-
 ///////////////////////////////
 // USER PARAMETERS
 ///////////////////////////////
@@ -169,7 +168,7 @@ module knob(dia=18, height=10)
 	}
 }
 
-module endstop_holder(height=10, thickness=4)
+module endstop_holder(height=10, thickness=4, length=10, extra_width=3)
 {
 	body_pos= [0,0];
 	body_wdith= rod_dia+rod_borders*2;
@@ -191,9 +190,7 @@ module endstop_holder(height=10, thickness=4)
 				{
 					translate([0,0,0]) square([arm_length,thickness],center=true);
 					translate([arm_length/2,0,0]) circle(r=thickness/2,center=true);
-				}
-
-				
+				}	
 			}
 
 			linear_extrude(height=height)
@@ -203,15 +200,14 @@ module endstop_holder(height=10, thickness=4)
 					translate([-body_wdith/2,0,0]) circle(r=thickness/2);
 					translate([-endstop_arm_to_adjuster_bolt,arm_mid_pos-arm_length/2,0]) circle(r=thickness/2);
 				}
-
 			}
 
 			linear_extrude(height=height)
 			{
 				hull()	
 				{
-					translate([0,0,0]) circle(r=body_wdith/2, center=true);
-					translate([0,5,0])  square([body_wdith,body_wdith], center=true);
+					translate([0,0,0]) circle(r=body_wdith/2+extra_width/2, center=true);
+					translate([0,5+length/2,0])  square([body_wdith+extra_width,length], center=true);
 				}
 			}
 
