@@ -1,3 +1,20 @@
+// Parametric sanguinololu enclosure
+//Licensed under the Creative Commons  license.
+// © 2012 by Mark "Ckaos" Moissette
+//http://www.thingiverse.com/thing:25521
+
+//TODO: add reset button system
+// //////////////////////////////
+//  USAGE EXAMPLE
+// //////////////////////////////
+
+enclosure_top();
+//translate([80,0,0])enclosure_bottom();
+
+///////////////////////////////
+// USER PARAMETERS
+///////////////////////////////
+
 walls_thickness=4.2;
 top_bottom_thickness = 2.7;
 corner_radius =4;
@@ -11,6 +28,8 @@ fan_mount_holes_dia=4;
 fan_mount_nut_dia=7.85;
 fan_mount_nut_height=3;
 fan_hole_dia=39;
+fan_cable_hole_dia=3;
+fan_cable_hole_pos =[-20,30];
 
 //v1.3a various infos
 pcb_length =102;
@@ -48,33 +67,23 @@ base_cutout_type=2;
 
 cap_pos = [20.5,18];//position of the capacitor
 cap_dia = 12.7;//diameter of the capacitor
-//general
-$fn=30;
-xtra = 0.05;
 
-//computed elements, please do not alter
+
+
+///////////////////////////////
+// GENERATED PARAMETERS, please do not alter
+///////////////////////////////
 total_height=top_bottom_thickness*2+pcb_feet_height+pcb_thickness+max_elem_height;
 bottom_height=connectors_height+top_bottom_thickness+pcb_thickness+pcb_feet_height;
 top_height= total_height-bottom_height+snap_fit_height/2;
 echo("total_height",total_height, "bottom",bottom_height,"top",top_height);
-
-// //////////////////////////////
-// Example usage
-// //////////////////////////////
-
-
-
-//enclosure_top();
- enclosure_bottom();
-//translate([0,0,total_height])  mirror ([0,0,1]) enclosure_top();
-// 
-//side_cuts_base_height= 	top_bottom_thickness +pcb_thickness+pcb_feet_height;
-//	%translate([0,0,side_cuts_base_height])  port_cuts();
+//general
+$fn=30;
+xtra = 0.05;
 
 // //////////////////////////////
 // OpenSCAD SCRIPT
 // //////////////////////////////
-
 
 module enclosure_bottom(base_cutout=true)
 {
@@ -161,8 +170,11 @@ module enclosure_top(fan_mounts=2)
 		
 		//fan opening
 		translate([0,0,-xtra/2]) cylinder(r=fan_hole_dia/2, h =top_height+xtra);	
+		//fan cable hole
+		translate([fan_cable_hole_pos[0],fan_cable_hole_pos[1],-xtra/2]) cylinder(r=fan_cable_hole_dia/2, h =top_height+xtra);	
 		//cap hole
 		translate([pcb_top_x_pos+cap_pos[0],pcb_top_y_pos+cap_pos[1],-xtra/2]) cylinder(r=cap_dia/2, h=top_height);
+
 
 	}
 }
