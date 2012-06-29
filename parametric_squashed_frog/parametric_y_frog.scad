@@ -10,7 +10,7 @@
 ///////////////////////////////
 
 //just set the elements you want to be generated to "true"
-frog(center_element=false,left_element=false,right_element=true);
+rotate([0,0,90]) frog(center_element=true,left_element=false,right_element=false);
 
 ///////////////////////////////
 // USER PARAMETERS
@@ -22,8 +22,8 @@ thickness=6;
 connector_width=3;//how thick should the elements connecting both "sides" be
 
 platform_mount_x_distance=73.5;//77.5;//how far from the center should the mounting holes for the platform be
-platform_mount_y_distance=45;//how apart  should the mounting holes for the platform be
-platform_mount_hole_dia=3.2;//platform mount holes diameter
+platform_mount_y_distance=110;//45;//how apart  should the mounting holes for the platform be
+platform_mount_hole_dia=4.1;//3.2;//platform mount holes diameter
 platform_mount_width=10;//how big much material should be around the mounting holes
 
 smooth_rod_distance=109;//distance between the Y axis smooth rods (from rod center to rod center)
@@ -32,13 +32,13 @@ smooth_rod_dia=6;//diameter of the smooth rods
 //this is mean to be used with bolted bushings so these are the parameters to make the bushing mounting holes align
 bolted_bushing_length=42.0;
 bolted_bushing_width=10;
-bolted_bushings_y_distance=30;//48;
+bolted_bushings_y_distance=65;//30;//48;
 bolted_bushing_holes_distance=28;
 bolted_bushing_holes_dia=4.2;
 
 //betk clamp mount data
 belt_clamp_width=6;
-belt_clamp_y_distance=30;//distance between the two belt clamps, this determines most of the width of the overall object
+belt_clamp_y_distance=65;//distance between the two belt clamps, this determines most of the width of the overall object
 belt_clamp_holes_distance=15;//distance between the belt clamps' two holes
 belt_clamp_holes_dia=4.2;
 
@@ -52,11 +52,12 @@ central_element_length=bolted_bushing_width+bolted_bushings_y_distance;//DO NOT 
 
 opto_bit=0;
 
-platform_mounts_extra_height=5;
-mount_nut_dia=6.3;
+platform_mounts_extra_height=7;
+mount_nut_dia=7.9;//6.3;
 
 include <includes/lm6uu-holder-slim_v1-1.scad>;
 //translate([smooth_rod_distance/2,bolted_bushings_y_distance/2,3]) lm8uu_holder(true);
+lmuu_holders=true;
 
 //_lateral_mount_element2();
 // //////////////////////////////
@@ -152,7 +153,7 @@ module _bushing_and_platform_element(generate_left=false,generate_right=true)
 module _lateral_mount_element()
 {
 	//angle betweenbushing outer hole and corresponding platform mount hole
-
+ 	
 	platform_mount_local_x=platform_mount_x_distance-smooth_rod_distance/2;
 	platform_mount_local_y=platform_mount_y_distance/2;
 
@@ -162,7 +163,7 @@ module _lateral_mount_element()
 
 	x_dist=abs(platform_mount_local_x-out_bushing_hole_local_x);
 	y_dist=abs(platform_mount_local_y-out_bushing_hole_local_y);
-	echo(x_dist,y_dist);
+
 
 	total_dist=sqrt(x_dist*x_dist+y_dist*y_dist);
 	angle=atan(y_dist/x_dist);
@@ -176,13 +177,8 @@ echo(total_dist,angle);
 	//connecting elements for platform
 	 _connector(type=1,y_distance=bolted_bushings_y_distance-bolted_bushing_width,x_distance=bolted_bushing_holes_distance+bolted_bushing_holes_dia);
 	
-
-
-
-
 	translate([-platform_mount_local_x,-platform_mount_local_y,0]) rotate([0,0,angle]) _rounded_arm(length=total_dist-bolted_bushing_holes_dia/2,width=platform_mount_width,flip=false);
 	translate([-platform_mount_local_x,platform_mount_local_y,0]) rotate([0,0,-angle])_rounded_arm(length=total_dist-bolted_bushing_holes_dia/2,width=platform_mount_width,flip=false);
-
 
 
 
@@ -254,14 +250,22 @@ if(mount_nut_dia>0)
 
 module _bushing_base_element(front=true)
 {
-	
+	if (lmuu_holders)
+	{
+		translate([0,0,3])lm8uu_holder(false);
+	}
 	difference()
 	{
 		cube([bolted_bushing_length,bolted_bushing_width,thickness],center=true);
+		
+
 		union()
 		{
+			if(! lmuu_holders)
+			{
 			translate([bolted_bushing_holes_distance/2,0,0])  cylinder(r=bolted_bushing_holes_dia/2,h=thickness*2,center=true);
 			translate([-bolted_bushing_holes_distance/2,0,0])  cylinder(r=bolted_bushing_holes_dia/2,h=thickness*2,center=true);
+			}
 		}
 	}
 }
@@ -286,7 +290,7 @@ module _rounded_arm(length=15,width=5,roundtwoends=false,flip=true)
 		
 		union()
 		{
-			translate([0,0,platform_mounts_extra_height/2]) cylinder(r=width/2,h=thickness+platform_mounts_extra_height,center=true);
+			translate([0,0,platform_mounts_extra_height/2]) cylinder(r=width/2+1,h=thickness+platform_mounts_extra_height,center=true);
 			if (flip)
 			{
 				 translate([-(length-width/2)/2,0,0]) cube([length-width/2,width,thickness],center=true);

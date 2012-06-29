@@ -65,7 +65,7 @@ module fan_duct(height=10)
 		translate([0,0,-xtra/2])  blower_hole(blower_inner_height);
 
 		//cut off , helper
-		//translate([0,0,-xtra/2])  cube([100,100,50]);
+		translate([0,0,-xtra/2])  cube([100,100,50]);
 	}
 }
 
@@ -86,6 +86,11 @@ module fan_mount(length=60, height=40, width=40, fan_thickness=8 , top_flat_leng
 			]
 			,paths = [[0,1,2,3,4,5,6]]);
 		}
+}
+
+module duct(length=60, height=40, width=40, fan_thickness=8 , top_flat_length=2)
+{
+
 }
 
 module duct_hole(length=60, height=37, width=34, fan_thickness=8 , top_flat_length=2)
