@@ -79,7 +79,7 @@ BOTH = "both";
 //draw all
 doboz();
 
-//rotate([90,0,0])x_end(half=RIGHT);
+//rotate([90,0,0])x_end(half=BOTH);
 //rotate([-90,0,0]) x_end(half=LEFT);
 
 //z_platform_holder();
@@ -260,6 +260,12 @@ module z_platform_holder(width=100, len=300, platform_with=220, arms_with=8, t_r
 	}
 }
 
+
+module foot()
+{
+
+}
+
 module y_end(pos=[0,0,0], rod_dia=8, width=48, length=8, height=25, holder_length=25, holder_height=5,  holder_length=12,walls_thickness=3, end_fill_thickness =1)
 {
 	mount_bolt_dia=4;
@@ -404,7 +410,7 @@ module x_platform(bearing_dia=8, rod_dist=30, width=40, length=20, height=50)
 }
 
 
-module x_end(pos=[0,0,0], rod_dia=8, rod_dist=30, width=16, length=26, walls_thickness=4, y_bearing_dia=15, y_bearing_length=24, y_bearing_id=9,y_arm_safe_dist= 6, x_arm_extra_distance=8,bearing_holder_thickness=5, belt_thickness=1.5, belt_width=6,x_axis_top_offset= 0,half=BOTH)
+module x_end(pos=[0,0,0], rod_dia=8, rod_dist=30, width=16, length=26, walls_thickness=4, y_bearing_dia=15, y_bearing_length=24, y_bearing_id=9,y_arm_safe_dist= 4, x_arm_extra_distance=8,bearing_holder_thickness=5, belt_thickness=1.5, belt_width=6,x_axis_top_offset= 0,half=BOTH)
 {
 	//all components based on offset between pulley+ belts
 	belt_pulley_od =24;
@@ -527,6 +533,8 @@ module x_end(pos=[0,0,0], rod_dia=8, rod_dist=30, width=16, length=26, walls_thi
 			rotate([90,90,0]) translate([-y_arm_height/2,0,-length/2])
 			difference()
 			{
+				union()
+				{
 				linear_extrude(height =length)
 				{
 					hull()
@@ -535,9 +543,12 @@ module x_end(pos=[0,0,0], rod_dia=8, rod_dist=30, width=16, length=26, walls_thi
 						translate([0,x_arm_x_offset,0]) square([y_arm_height,0.01],center=true);
 					}
 				}
+				translate([0,0,-y_bearing_length/2])cylinder(r=y_arm_height/2, h=y_bearing_length*2);}
 				//bearing hole
-			 	translate([0,0,length_diff/2])cylinder(r=y_bearing_dia/2+y_bearings_hole_extra/2, h=y_bearing_length);
+				translate([0,0,-y_bearing_length/2-xtra]) cylinder(r=y_bearing_dia/2+y_bearings_hole_extra/2, h=y_bearing_length*2+xtra*2);
+			 	//-translate([0,0,length_diff/2])cylinder(r=y_bearing_dia/2+y_bearings_hole_extra/2, h=y_bearing_length*2);
 				translate([0,0,-xtra/2])cylinder(r=y_bearing_dia/2-bearing_end_blocker_thickness, h=length+xtra);
+	
 			}
 		}
 	}
