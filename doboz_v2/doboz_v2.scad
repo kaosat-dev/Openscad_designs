@@ -85,6 +85,8 @@ doboz();
 //z_platform_holder();
 //%rotate([-90,0,0])y_end();
 //rotate([-90,0,0])y_end2();
+
+// foot();
 ///////////////////////////////
 // OpenSCAD SCRIPT
 ////////////////////////////////
@@ -111,7 +113,7 @@ module doboz()
 	color([ 0.9, 0.9, 0.8 ])
 	{
 	//front and back vertical
-	for(i= [-1,1])
+	/*for(i= [-1,1])
 	for(j= [-1,1])
 	translate([(machine_width/2)*i,j*machine_length/2,0])  mirror([1+i,j+1,0])
 	{
@@ -135,7 +137,7 @@ module doboz()
 		cube([bottom_extrusions_width,machine_length,angle_extrusions_thickness]);
 		cube([angle_extrusions_thickness,machine_length,bottom_extrusions_width]);
 
-	}
+	}*/
 	}
 	
 
@@ -146,10 +148,10 @@ module doboz()
 
 	//steppers
 	translate([machine_width/2-angle_extrusions_width,machine_length/2-bottom_extrusions_width/2,machine_height-bottom_extrusions_width]) mirror([0,0,1]) 
- 	motor(Nema17, size=NemaLong, dualAxis=false);
+ 	rotate([0,0,45])motor(Nema17, size=NemaLong, dualAxis=false);
 
 	translate([-machine_width/2+angle_extrusions_width,machine_length/2-bottom_extrusions_width/2,machine_height-bottom_extrusions_width]) mirror([0,0,1]) 
-	 motor(Nema17, size=NemaLong, dualAxis=false);
+	 rotate([0,0,45])motor(Nema17, size=NemaLong, dualAxis=false);
 
 	translate([0,machine_length/2-bottom_extrusions_width/2,machine_height-bottom_extrusions_width+angle_extrusions_thickness]) 
 	 motor(Nema17, size=NemaLong, dualAxis=false);
@@ -181,7 +183,7 @@ module doboz()
 	//////////////////////////////////////////////////
 	////////////actual elements////////////
 
-	for(i= [-1,1]) for(j= [-1,0])  mirror([0,j,0]) y_end2([y_rods_dist/2*i ,machine_length/2-2*angle_extrusions_thickness,y_rods_z_dist]);
+	for(i= [-1,1]) for(j= [-1,0])  mirror([0,j,0]) y_end2([y_rods_dist/2*i ,machine_length/2-2*angle_extrusions_thickness-15,y_rods_z_dist]);
 	
 	translate([-x_platform_width/2,-x_platform_length/2,x_rods_z_dist-x_platform_height/2])
 	x_platform(x_rods_bearing_dia, x_rods_dist,x_platform_width,x_platform_length,x_platform_height);
@@ -191,6 +193,15 @@ module doboz()
 	mirror([(i+1)*1,0,0]) x_end([-y_rods_dist/2,0,y_rods_z_dist]);
 
 	translate([0,machine_length/2-bottom_extrusions_width/2,machine_height/2])z_platform_holder(srods_dist=z_s_rods_dist);
+
+
+	for(i= [-1,1]) translate([(machine_width/2-angle_extrusions_width/2)*i,(-machine_length/2+angle_extrusions_width/2),0]) 
+	mirror([0,i-1,0]) foot();
+
+	for(i= [-1,1]) translate([(machine_width/2-angle_extrusions_width/2)*i,(machine_length/2-angle_extrusions_width/2),0]) 
+	rotate([0,0,90]) mirror([0,i-1,0]) foot();
+
+	
 }
 
 module z_platform_holder(width=100, len=300, platform_with=220, arms_with=8, t_rod_dia=8, s_rods_dia=8, srods_dist=140, bearing_dia=15, bearing_length=24, bearing_id=9,walls_thickness=4)
@@ -261,9 +272,12 @@ module z_platform_holder(width=100, len=300, platform_with=220, arms_with=8, t_r
 }
 
 
-module foot()
+module foot(element_width=40, element_thickness=5)
 {
-
+	color([ 0.95, 0.95, 0.95])
+	rotate([0,0,45])
+	translate([0,0,222.5])
+	cube([element_width,element_thickness,445],center=true);
 }
 
 module y_end(pos=[0,0,0], rod_dia=8, width=48, length=8, height=25, holder_length=25, holder_height=5,  holder_length=12,walls_thickness=3, end_fill_thickness =1)
