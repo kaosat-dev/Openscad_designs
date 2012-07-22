@@ -9,6 +9,7 @@ include <MCAD/nuts_and_bolts.scad>
 //TODO , either move current top assemlby hole or add another-->DONE
 //TODO : check x arm offset extra -->DONE
 //TODO : modify parametrization of belt bearing holder-->DONE
+//TODO: fix x_ends left right/ front back logic-->DONE
 ///////////////////////////////
 // USER PARAMETERS
 ///////////////////////////////
@@ -70,23 +71,35 @@ belt_width=6;
 xtra=0.1;
 tolerance = +0.0001;
 
+FRONT = "front";
+BACK = "back";
 LEFT="left";
 RIGHT="right";
 BOTH = "both";
+
+
+MECHA_COLOR =[ 1.0, 0.46, 0.2 ];//[ 1.0, 0.85, 0.0 ]; //
+STRUCT_COLOR =[ 0.95, 0.95, 0.95];
 ///////////////////////////////
 //example usage
 
 //draw all
 doboz();
 
-//rotate([90,0,0])x_end(half=BOTH);
-//rotate([-90,0,0]) x_end(half=LEFT);
+//x_end(half=BOTH);
+//mirror([1,0,0]) x_end(half=BACK);
+//%x_end(half=BACK);
+
+//mirror([1,0,0]) x_end(half=FRONT);
+//%x_end(half=FRONT);
+
+
 
 //z_platform_holder();
 //%rotate([-90,0,0])y_end();
 //rotate([-90,0,0])y_end2();
 
-// foot();
+//foot();
 ///////////////////////////////
 // OpenSCAD SCRIPT
 ////////////////////////////////
@@ -178,8 +191,56 @@ module doboz()
 
 
 	//size ref
-	%cube([machine_width,machine_length,angle_extrusions_thickness], center=true);
+	//%cube([machine_width,machine_length,angle_extrusions_thickness], center=true);
 	
+	mount_platform();
+	mount_platform([0,0,machine_height-bottom_extrusions_width]);
+	module mount_platform(pos=[0,0,0], thickness=5)
+	{
+		width = machine_width;
+		length=machine_length;
+		color(STRUCT_COLOR)
+		translate(pos)
+		{
+			difference()
+			{
+				cube([width,length,thickness], center=true);
+				
+				translate([0,0,-0.1])
+				{
+				cube([width-bottom_extrusions_width*2,length-bottom_extrusions_width*2,thickness*2], center=true);
+
+				translate([width/2,-length/2,0]) rotate([0,0,45])cube([40,40,thickness*2],center=true);
+				translate([-width/2,-length/2,0]) rotate([0,0,45])cube([40,40,thickness*2],center=true);
+
+				translate([width/2,length/2,0]) rotate([0,0,45])cube([40,40,thickness*2],center=true);
+				translate([-width/2,length/2,0]) rotate([0,0,45])cube([40,40,thickness*2],center=true);
+				}
+			}
+		}
+	}
+
+	border_planks();
+	border_planks([0,0,machine_height-bottom_extrusions_width+5]);
+	module border_planks(pos=[0,0,0], thickness=5)
+	{
+		width = machine_width-60;
+		length=machine_length-60;
+		height=45;
+		color(STRUCT_COLOR)
+		translate(pos)
+		{
+			translate([0,0,height/2]) 
+			{
+				translate([0,-machine_length/2,0]) cube([width,thickness,height], center=true);
+				translate([0,machine_length/2,0]) cube([width,thickness,height], center=true);
+
+				translate([-machine_width/2,0,0]) cube([thickness,length,height], center=true);
+				translate([machine_width/2,0,0]) cube([thickness,length,height], center=true);
+			}
+		}	
+	}
+
 	//////////////////////////////////////////////////
 	////////////actual elements////////////
 
@@ -196,10 +257,10 @@ module doboz()
 
 
 	for(i= [-1,1]) translate([(machine_width/2-angle_extrusions_width/2)*i,(-machine_length/2+angle_extrusions_width/2),0]) 
-	mirror([0,i-1,0]) foot();
+	rotate([0,0,90*(i+1)]) mirror([0,i-1,0]) foot();
 
 	for(i= [-1,1]) translate([(machine_width/2-angle_extrusions_width/2)*i,(machine_length/2-angle_extrusions_width/2),0]) 
-	rotate([0,0,90]) mirror([0,i-1,0]) foot();
+	rotate([0,0,-90]) mirror([0,i-1,0]) foot();
 
 	
 }
@@ -252,7 +313,7 @@ module z_platform_holder(width=100, len=300, platform_with=220, arms_with=8, t_r
 		}
 	}
 
-	color([ 1.0, 0.46, 0.2 ])
+	color(MECHA_COLOR)
 	{
 		difference()
 		{
@@ -272,12 +333,64 @@ module z_platform_holder(width=100, len=300, platform_with=220, arms_with=8, t_r
 }
 
 
-module foot(element_width=40, element_thickness=5)
+module foot(pos=[0,0,0] ,element_width=45, element_thickness=5, vertical_element_angle=45, wall_thickness=5, block_height=30)
 {
-	color([ 0.95, 0.95, 0.95])
+	color(STRUCT_COLOR)
 	rotate([0,0,45])
 	translate([0,0,222.5])
 	cube([element_width,element_thickness,445],center=true);
+
+	clamp_length=20;
+	vert_holder_width=wall_thickness*2+element_thickness;
+	block_angle_len = cos(vertical_element_angle) * element_width;
+	block_width=clamp_length+vert_holder_width+block_angle_len;
+
+
+	pt0_pos = [0,0];
+	pt1_pos = [0,clamp_length];
+	pt2_pos = [pt1_pos[0]+block_angle_len, pt1_pos[1]+block_angle_len];
+	pt3_pos = [pt2_pos[0]+clamp_length,pt2_pos[1]];
+	pt4_pos = [pt3_pos[0],pt3_pos[1]+vert_holder_width];
+	pt5_pos = [pt2_pos[0]-element_thickness,pt4_pos[1]];
+	pt6_pos = [-vert_holder_width,pt1_pos[1]+element_thickness];
+	pt7_pos = [-vert_holder_width,0];
+
+	
+	color(STRUCT_COLOR)
+	translate(pos)
+	difference()
+	{
+
+		translate([-block_width/2+vert_holder_width,-block_width/2,0])
+		linear_extrude(height=block_height)
+		{
+
+			
+			polygon(points = [
+			pt0_pos,
+			pt1_pos,
+			pt2_pos,
+			pt3_pos,
+			pt4_pos,
+			pt5_pos,
+			pt6_pos,
+			pt7_pos
+			]
+			,paths = [[0,1,2,3,4,5,6,7]]);
+		}
+		
+		translate([-block_width/2+vert_holder_width,-block_width/2,0])
+		{
+		translate([-vert_holder_width/2-element_thickness/2,-xtra/2,-xtra/2])cube([element_thickness,clamp_length,block_height+xtra]);
+		translate([block_width/2-1.5,block_width-vert_holder_width/2-element_thickness/2,-xtra/2]) cube([clamp_length,element_thickness,block_height+xtra]);
+		}
+
+		rotate([0,0,45]) cube([element_width,element_thickness,102],center=true);
+		
+		
+	}
+	
+	
 }
 
 module y_end(pos=[0,0,0], rod_dia=8, width=48, length=8, height=25, holder_length=25, holder_height=5,  holder_length=12,walls_thickness=3, end_fill_thickness =1)
@@ -290,7 +403,7 @@ module y_end(pos=[0,0,0], rod_dia=8, width=48, length=8, height=25, holder_lengt
 
 	
 
-	color([ 1.0, 0.46, 0.2 ])
+	color(MECHA_COLOR)
 	translate(pos)
 	difference()
 	{
@@ -323,7 +436,7 @@ module y_end2(pos=[0,0,0], rod_dia=8, width=48, length=6, height=25, holder_leng
 
 	nut_height = METRIC_NUT_THICKNESS[mount_bolt_dia]+tolerance;
 
-	color([ 1.0, 0.46, 0.2 ])
+	color(MECHA_COLOR)
 	translate(pos)
 	difference()
 	{
@@ -374,7 +487,7 @@ module x_platform(bearing_dia=8, rod_dist=30, width=40, length=20, height=50)
 	belt_z_pos=20;
 	back_cover_len=10;
 
-	color([ 1.0, 0.46, 0.2 ])
+	color(MECHA_COLOR)
 	{
 		difference()
 		{
@@ -424,15 +537,15 @@ module x_platform(bearing_dia=8, rod_dist=30, width=40, length=20, height=50)
 }
 
 
-module x_end(pos=[0,0,0], rod_dia=8, rod_dist=30, width=16, length=26, walls_thickness=4, y_bearing_dia=15, y_bearing_length=24, y_bearing_id=9,y_arm_safe_dist= 4, x_arm_extra_distance=8,bearing_holder_thickness=5, belt_thickness=1.5, belt_width=6,x_axis_top_offset= 0,half=BOTH)
+module x_end(pos=[0,0,0], rod_dia=8, rod_dist=30, width=16, length=26, walls_thickness=4, y_bearing_dia=15, y_bearing_length=24, y_bearing_cap_id=14.5,y_arm_safe_dist= 4, x_arm_extra_distance=8,bearing_holder_thickness=5, belt_thickness=1.5, belt_width=6,x_axis_top_offset= 0,half=BOTH)
 {
 	//all components based on offset between pulley+ belts
 	belt_pulley_od =24;
 	belt_pulley_height=11.5;
-	x_rod_holes_undersize=-0.1;
-	y_bearings_hole_extra= 0.4;
+	x_rod_holes_undersize=0.0;
+	y_bearings_hole_extra= 0.2;
 	bearing_end_blocker_thickness=0.7;
-
+	x_cap_len=1;//cap at end of rods
 
 	y_arm_height= y_bearing_dia + 2*walls_thickness;
 	
@@ -540,8 +653,12 @@ module x_end(pos=[0,0,0], rod_dia=8, rod_dist=30, width=16, length=26, walls_thi
 
 	module y_arm(pos=[0,0,0])
 	{
-		length_diff = length-y_bearing_length;
-		
+
+
+		end_caps_length= 0.7;
+		arm_length =( y_bearing_length+end_caps_length)*2;
+		bearing_r=y_bearing_dia/2+y_bearings_hole_extra;
+
 		translate(pos)
 		{
 			rotate([90,90,0]) translate([-y_arm_height/2,0,-length/2])
@@ -557,11 +674,20 @@ module x_end(pos=[0,0,0], rod_dia=8, rod_dist=30, width=16, length=26, walls_thi
 						translate([0,x_arm_x_offset,0]) square([y_arm_height,0.01],center=true);
 					}
 				}
-				translate([0,0,-y_bearing_length/2])cylinder(r=y_arm_height/2, h=y_bearing_length*2);}
+				translate([0,0,length/2])cylinder(r=y_arm_height/2, h=arm_length-10, center=true);
+				translate([0,0,length/2-arm_length/2+2.5])cylinder(r2=y_arm_height/2, r1=y_arm_height/2-2, h=5, center=true);
+				translate([0,0,length/2+arm_length/2-2.5])cylinder(r1=y_arm_height/2, r2=y_arm_height/2-2, h=5, center=true);
+
+				}
+
+				translate([0,0,length/2])
+				{
 				//bearing hole
-				translate([0,0,-y_bearing_length/2-xtra]) cylinder(r=y_bearing_dia/2+y_bearings_hole_extra/2, h=y_bearing_length*2+xtra*2);
-			 	//-translate([0,0,length_diff/2])cylinder(r=y_bearing_dia/2+y_bearings_hole_extra/2, h=y_bearing_length*2);
-				translate([0,0,-xtra/2])cylinder(r=y_bearing_dia/2-bearing_end_blocker_thickness, h=length+xtra);
+				translate([0,0,0]) cylinder(r=bearing_r, h=y_bearing_length*2, center=true);
+
+				translate([0,0,arm_length/2-end_caps_length-xtra/2])cylinder(r2=y_bearing_cap_id/2, r1 =bearing_r , h=end_caps_length+xtra);
+				translate([0,0,-arm_length/2+end_caps_length+xtra/2]) mirror([0,0,1])cylinder(r2=y_bearing_cap_id/2, r1 =bearing_r , h=end_caps_length+xtra);
+				}
 	
 			}
 		}
@@ -598,7 +724,7 @@ module x_end(pos=[0,0,0], rod_dia=8, rod_dist=30, width=16, length=26, walls_thi
 			}
 			
 			//xrod holes
-			for(i= [-1,1]) translate([-xtra/2+x_arm_x_offset,0,rod_dist/2*i+x_rods_z_offset]) rotate([0,90,0])  cylinder(r=rod_dia/2-x_rod_holes_undersize/2, h=width+xtra);	
+			for(i= [-1,1]) translate([-xtra/2+x_arm_x_offset+x_cap_len,0,rod_dist/2*i+x_rods_z_offset]) rotate([0,90,0])  cylinder(r=rod_dia/2-x_rod_holes_undersize/2, h=width+xtra);	
 			for(i= [-1,1]) mirror([0,(i-1),0]) belt_notch([x_arm_x_offset+width/2,length/2-belt_guide_notch_depth/2+xtra/2,belt_guide_z_offset]);
 
 			//2 halves attachments
@@ -612,16 +738,16 @@ module x_end(pos=[0,0,0], rod_dia=8, rod_dist=30, width=16, length=26, walls_thi
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	color([ 1.0, 0.46, 0.2 ])
+	color(MECHA_COLOR)
 	{
 		translate(pos)
-		if (half==LEFT)
+		if (half==FRONT)
 		{
-			difference(){_x_end();translate([-20,0,-x_arm_height+5])cube([150,50,x_arm_height+10]);}
+			rotate([-90,0,0]) difference(){_x_end();translate([-20,0,-x_arm_height+5])cube([150,50,x_arm_height+10]);}
 		}
-		else if (half ==RIGHT)
+		else if (half ==BACK)
 		{	
-			difference(){_x_end();translate([-25,-50,-75])cube([100,50,100]);}
+			rotate([90,0,0]) difference(){_x_end();translate([-25,-50,-75])cube([100,50,100]);}
 		}
 		else
 		{_x_end();}
