@@ -164,7 +164,7 @@ module knob(dia=18, height=10)
 		cylinder(r= knob_bolt_dia/2, h=height+xtra);
 		translate([0,0,0]) cylinder(r= knob_bolt_head_dia/2, h=knob_bolt_head_height);
 
-		translate([0,0,height-knob_nut_height]) cylinder(r= knob_nut_dia/2, h=knob_nut_height+xtra, $fn=5);
+		translate([0,0,height-knob_nut_height]) cylinder(r= knob_nut_dia/2, h=knob_nut_height+xtra, $fn=6);
 	}
 }
 

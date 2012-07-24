@@ -84,7 +84,7 @@ STRUCT_COLOR =[ 0.95, 0.95, 0.95];
 //example usage
 
 //draw all
-doboz();
+//doboz();
 
 //x_end(half=BOTH);
 //mirror([1,0,0]) x_end(half=BACK);
@@ -100,6 +100,8 @@ doboz();
 //rotate([-90,0,0])y_end2();
 
 //foot();
+
+x_platform();
 ///////////////////////////////
 // OpenSCAD SCRIPT
 ////////////////////////////////
@@ -478,31 +480,91 @@ module y_end2(pos=[0,0,0], rod_dia=8, width=48, length=6, height=25, holder_leng
 	}
 }
 
-module x_platform(bearing_dia=8, rod_dist=30, width=40, length=20, height=50)
+module x_platform(bearing_id=8, rod_dist=30, width=40, length=30, height=50, bearing_dia=15, bearing_length=24, bearing_cap_id=14.5, num_bearings=2, belt_width=6, belt_thickness=1.5)
 {
 	belt_tensionner_holder_thickness=4;
 	belt_tensionner_holder_dia=7;
 	belt_tensionner_bolt_dia=4;
 
-	belt_z_pos=20;
+	belt_z_pos=0;
 	back_cover_len=10;
+	width = max(bearing_length *num_bearings,width);
 
-	color(MECHA_COLOR)
+	x_end_length=26;
+	belt_bearing_dims=bearingDimensions(624);//inner, outer, width
+	belt_bearings_y_dist=belt_bearing_dims[1]+x_end_length+belt_thickness*2;
+
+	
+	module belt_tightener(pos=[0,0,0], width=35, length=3, height=belt_thickness+3*2, buckle_hole_width=2, buckle_hole_dist=3)
 	{
+
+		translate(pos)
 		difference()
 		{
-			union()
-			{
-				cube([width,length,height]);
-			
-			}
-			for(i= [-1,1]) translate([-xtra/2,length/2,height/2+rod_dist/2*i]) rotate([0,90,0])  cylinder(r=bearing_dia/2, h=width+xtra);
+			cube([width,length,height], center=true);
+			//buckle holes
+			 translate([-width/2+buckle_hole_width/2+buckle_hole_dist,0,0]) cube([buckle_hole_width,length+xtra,belt_width], center=true);
 
-			//hole for possible tensionner
-		 	 translate([width/2,length+xtra/2,belt_z_pos]) rotate([90,0,0]) cylinder(r=belt_tensionner_bolt_dia/2, h=length+xtra);
+			 translate([-width/2+buckle_hole_width*1.5+buckle_hole_dist*2,0,0]) cube([buckle_hole_width,length+xtra,belt_width], center=true);
 
+
+			 translate([width/2-buckle_hole_width/2-buckle_hole_dist,0,0]) cube([buckle_hole_width,length+xtra,belt_width], center=true);
+			 translate([width/2-buckle_hole_width*1.5-buckle_hole_dist*2,0,0]) cube([buckle_hole_width,length+xtra,belt_width], center=true);
+	
 		}
+	}
 
+	module tightener_knob(pos=[0,0,0])
+	{
+		// possible belt tightener knob
+		translate(pos)
+		color([ 0.7, 0.7, 0.7 ]) translate([0,-10,belt_z_pos]) rotate([90,0,0]) cylinder(r=7, h=10+xtra);
+	}
+
+	module bearing_holder(pos=[0,0,0])
+	{
+		end_caps_length= 0.7;
+		bearings_hole_extra = 0;
+		block_width =(bearing_length+end_caps_length)*2;
+		bearing_r=bearing_dia/2+bearings_hole_extra;
+
+		belt_block_length = belt_thickness + 3*2;
+		belt_block_width=5;
+
+		translate(pos)
+		{
+			difference()
+			{
+				union()
+				{
+					//main block 
+					cube([block_width,length,height], center=true);
+
+					translate([-width/2+belt_block_width/2,-length/2-belt_block_length/2, 0]) cube([belt_block_width,belt_block_length,10], center=true);
+					translate([width/2-belt_block_width/2,-length/2-belt_block_length/2, 0]) cube([belt_block_width,belt_block_length,10], center=true);
+				}
+
+				//hole for  tensionner
+		 		 translate([0,0,belt_z_pos]) rotate([90,0,0]) cylinder(r=belt_tensionner_bolt_dia/2, h=length+xtra, center=true);
+
+				translate([0,-length/2-belt_block_length/2, 0]) cube([block_width,belt_thickness,belt_width], center=true);
+		
+				//bearings holes
+				for(i= [-1,1]) translate([0,0,rod_dist/2*i])
+				 rotate([0,90,0])
+				{
+				//bearing hole
+				translate([0,0,0]) cylinder(r=bearing_r, h=bearing_length*2, center=true);
+
+				translate([0,0,block_width/2-end_caps_length-xtra/2])cylinder(r2=bearing_cap_id/2, r1 =bearing_r , h=end_caps_length+xtra);
+				translate([0,0,-block_width/2+end_caps_length+xtra/2]) mirror([0,0,1])cylinder(r2=bearing_cap_id/2, r1 =bearing_r , h=end_caps_length+xtra);
+				}
+			}
+		}
+	}
+
+	module front_cover()
+	{
 		//back cover
 		translate([0,25,0]) 
 		difference()
@@ -514,25 +576,21 @@ module x_platform(bearing_dia=8, rod_dist=30, width=40, length=20, height=50)
 			
 			translate([-xtra/2,back_cover_len/2-4,belt_z_pos])  rotate([0,90,0])cylinder(r=4, h=width+xtra);
 		}
-
-	difference()
-	{
-		linear_extrude(height =belt_tensionner_holder_thickness)
-		{
-			hull()
-			{
-				translate([0,0,0])circle(r=belt_tensionner_holder_dia);
-				translate([0,-10,0])circle(r=belt_tensionner_holder_dia);
-			}
-		}
-		for(i= [-1,1])
-		translate([0,0*i,-xtra/2]) cylinder(r=belt_tensionner_bolt_dia/2 ,h= belt_tensionner_holder_thickness+xtra);
 	}
 
-	translate([0,-8, 0]) cube([10,8,30]);
-	translate([width-10,-8, 0]) cube([10,8,30]);
-	// possible belt tightener knob
-	color([ 0.7, 0.7, 0.7 ]) translate([width/2,-10,belt_z_pos]) rotate([90,0,0]) cylinder(r=7, h=10+xtra);
+
+	color(MECHA_COLOR)
+	{
+		bearing_holder();
+		tightener_knob([0,-11,0]);
+		belt_tightener([0,-17,0]);
+
+		//some helpers to visualize belts and bearings
+		for(i= [-1,1])for(j= [0,1]) 
+		%bearing(pos=[80*j-40,belt_bearings_y_dist/2*i,-belt_bearing_dims[2] /2], model=624, outline=false);
+		translate([0,-belt_bearings_y_dist/2+belt_bearing_dims[2]+belt_thickness*1.5,0]) %cube([200,belt_thickness,belt_width], center=true);
+
+		translate([0,belt_bearings_y_dist/2-belt_bearing_dims[2]-belt_thickness*1.5,0]) %cube([200,belt_thickness,belt_width], center=true);
 	}
 }
 
@@ -688,7 +746,6 @@ module x_end(pos=[0,0,0], rod_dia=8, rod_dist=30, width=16, length=26, walls_thi
 				translate([0,0,arm_length/2-end_caps_length-xtra/2])cylinder(r2=y_bearing_cap_id/2, r1 =bearing_r , h=end_caps_length+xtra);
 				translate([0,0,-arm_length/2+end_caps_length+xtra/2]) mirror([0,0,1])cylinder(r2=y_bearing_cap_id/2, r1 =bearing_r , h=end_caps_length+xtra);
 				}
-	
 			}
 		}
 	}
