@@ -480,56 +480,93 @@ module y_end2(pos=[0,0,0], rod_dia=8, width=48, length=6, height=25, holder_leng
 	}
 }
 
-module x_platform(bearing_id=8, rod_dist=30, width=40, length=30, height=50, bearing_dia=15, bearing_length=24, bearing_cap_id=14.5, num_bearings=2, belt_width=6, belt_thickness=1.5)
+module x_platform(bearing_id=8, rod_dist=30, width=40, length=30, height=50, bearing_dia=15, bearing_length=24, bearing_cap_id=14.5, num_bearings=2, belt_width=6, belt_thickness=1.5, walls_thickness=4)
 {
+
+	//TODO: cleanup
+	//TODO: add inset at start of tightener's hole
+
+	x_end_length=26;
+
 	belt_tensionner_holder_thickness=4;
 	belt_tensionner_holder_dia=7;
 	belt_tensionner_bolt_dia=4;
 
 	belt_z_pos=0;
 	back_cover_len=10;
-	width = max(bearing_length *num_bearings,width);
 
-	x_end_length=26;
+
+	end_caps_length= 0.7;//for bearing retaining
+	block_width =(bearing_length+end_caps_length)*2;
+
+	width = max(bearing_length *num_bearings,width);
+	length = walls_thickness*2+bearing_dia;
+
+	
 	belt_bearing_dims=bearingDimensions(624);//inner, outer, width
 	belt_bearings_y_dist=belt_bearing_dims[1]+x_end_length+belt_thickness*2;
 
+
+	belt_guides_width =6;
+
+	//for all belt holes
+	belt_width_extra=0.5;
+	belt_hole_width= belt_width + belt_width_extra;
+
 	
-	module belt_tightener(pos=[0,0,0], width=35, length=3, height=belt_thickness+3*2, buckle_hole_width=2, buckle_hole_dist=3)
+	module belt_tightener(pos=[0,0,0],  length=3, height=belt_width+3*2, buckle_hole_width=2, buckle_hole_dist=3)
 	{
+		//width=35,
+		belt_width_extra=0.5;
+		belt_hole_length = belt_width + belt_width_extra;
+		width = block_width- belt_guides_width*2;
 
 		translate(pos)
 		difference()
 		{
-			cube([width,length,height], center=true);
+			union()
+			{
+				cube([width,length,height], center=true);
+				//for tightener only, not joiner
+				translate([0,length,0]) cube([5,5,height], center=true);
+			}
+
 			//buckle holes
-			 translate([-width/2+buckle_hole_width/2+buckle_hole_dist,0,0]) cube([buckle_hole_width,length+xtra,belt_width], center=true);
+			for(i= [1,2,3])
+			translate([-width/2+buckle_hole_width*(0.5+i-1)+buckle_hole_dist*i,0,0]) cube([buckle_hole_width,length+xtra,belt_hole_length], center=true);
+			for(i= [1,2,3])
+			translate([width/2-buckle_hole_width*(0.5+i-1)-buckle_hole_dist*i,0,0]) cube([buckle_hole_width,length+xtra,belt_hole_length], center=true);
 
-			 translate([-width/2+buckle_hole_width*1.5+buckle_hole_dist*2,0,0]) cube([buckle_hole_width,length+xtra,belt_width], center=true);
-
-
-			 translate([width/2-buckle_hole_width/2-buckle_hole_dist,0,0]) cube([buckle_hole_width,length+xtra,belt_width], center=true);
-			 translate([width/2-buckle_hole_width*1.5-buckle_hole_dist*2,0,0]) cube([buckle_hole_width,length+xtra,belt_width], center=true);
-	
+			rotate([90,0,0]) translate([0,0,-1])cylinder(r=2, h =6,center=true);
 		}
 	}
 
-	module tightener_knob(pos=[0,0,0])
+	module tightener_knob(pos=[0,0,0], dia=18, height=10, bolt_dia=4)
 	{
-		// possible belt tightener knob
+		capHeight = METRIC_NUT_THICKNESS[bolt_dia]+tolerance; 
+		nutHeight = METRIC_NUT_AC_WIDTHS[bolt_dia];
+
 		translate(pos)
-		color([ 0.7, 0.7, 0.7 ]) translate([0,-10,belt_z_pos]) rotate([90,0,0]) cylinder(r=7, h=10+xtra);
+		difference()
+		{
+			cylinder(r= dia/2, h=height);
+			cylinder(r=bolt_dia/2, h=height+xtra);
+			 rotate([180,0,0]) translate([0,0,capHeight-xtra/2-height]) boltHole(size=bolt_dia, length =height+xtra);
+			translate([0,0,-xtra/2])nutHole(bolt_dia);
+		}
 	}
 
 	module bearing_holder(pos=[0,0,0])
 	{
-		end_caps_length= 0.7;
 		bearings_hole_extra = 0;
-		block_width =(bearing_length+end_caps_length)*2;
 		bearing_r=bearing_dia/2+bearings_hole_extra;
 
 		belt_block_length = belt_thickness + 3*2;
-		belt_block_width=5;
+		belt_block_height= belt_width+3*2;
+
+		belt_y_pos = -belt_bearings_y_dist/2+belt_bearing_dims[2]+belt_thickness*1.5;
+		front_extra=8; ///needed to allow passage for belt
+		front_trench_dia=15;
 
 		translate(pos)
 		{
@@ -538,16 +575,67 @@ module x_platform(bearing_id=8, rod_dist=30, width=40, length=30, height=50, bea
 				union()
 				{
 					//main block 
-					cube([block_width,length,height], center=true);
 
-					translate([-width/2+belt_block_width/2,-length/2-belt_block_length/2, 0]) cube([belt_block_width,belt_block_length,10], center=true);
-					translate([width/2-belt_block_width/2,-length/2-belt_block_length/2, 0]) cube([belt_block_width,belt_block_length,10], center=true);
+					translate([-block_width/2,0,0]) rotate([0,90,0])
+					linear_extrude(height =block_width)
+					{
+						hull()
+						{
+							translate([height/2,0,0]) square([0.01,length],center=true);
+							//translate([-height/2,0,0]) square([0.01,length],center=true);
+							translate([-height/2,0,0]) circle(r=length/2);
+						}
+					}
+				
+					//front extra block
+					translate([-block_width/2,length/2,-height/2]) cube([block_width,front_extra,height]);
+		
+					translate([block_width/2-belt_guides_width,-length/2,0]) 
+					rotate( [0,90,0])
+					linear_extrude(height =belt_guides_width)
+					{
+						hull()
+						{
+							translate([height/2,0,0]) square([0.01,0.01],center=true);
+							translate([0,-belt_block_length/2,0]) square([belt_block_height,belt_block_length],center=true);
+							translate([-height/2,0,0]) square([0.01,0.01],center=true);
+
+							
+						}
+					}
+					
+					translate([-block_width/2,-length/2,0]) 
+					rotate( [0,90,0])
+					linear_extrude(height =belt_guides_width)
+					{
+						hull()
+						{
+							translate([height/2,0,0]) square([0.01,0.01],center=true);
+							translate([0,-belt_block_length/2,0]) square([belt_block_height,belt_block_length],center=true);
+							translate([-height/2,0,0]) square([0.01,0.01],center=true);	
+						}
+					}
+
+
+			//		translate([-block_width/2+belt_guides_width/2,-length/2-belt_block_length/2, 0]) cube([belt_guides_width,belt_block_length,belt_block_height], center=true);
+			//		translate([block_width/2-belt_guides_width/2,-length/2-belt_block_length/2, 0]) cube([belt_guides_width,belt_block_length,belt_block_height], center=true);
+
+				
 				}
 
-				//hole for  tensionner
-		 		 translate([0,0,belt_z_pos]) rotate([90,0,0]) cylinder(r=belt_tensionner_bolt_dia/2, h=length+xtra, center=true);
+				//front belt hole
+				translate([0,12,0]) rotate([90,0,90]) cylinder(r= front_trench_dia/2 , h=block_width+xtra, center=true);
 
-				translate([0,-length/2-belt_block_length/2, 0]) cube([block_width,belt_thickness,belt_width], center=true);
+				//mount holes
+		 		 translate([0,0,0]) rotate([0,90,0]) cylinder(r=belt_tensionner_bolt_dia/2, h=length+xtra+100, center=true);
+				 translate([0,0,rod_dist/2+bearing_dia/2+walls_thickness]) rotate([0,90,0]) cylinder(r=belt_tensionner_bolt_dia/2, h=length+xtra+100, center=true);
+
+
+				//-belt_block_length/2
+				//belt hole
+				//translate([0,-length/2, 0]) cube([block_width+xtra,belt_thickness,belt_hole_width], center=true);
+
+				translate([0,belt_y_pos,0]) cube([block_width+xtra,belt_thickness,belt_width], center=true);
 		
 				//bearings holes
 				for(i= [-1,1]) translate([0,0,rod_dist/2*i])
@@ -582,8 +670,9 @@ module x_platform(bearing_id=8, rod_dist=30, width=40, length=30, height=50, bea
 	color(MECHA_COLOR)
 	{
 		bearing_holder();
-		tightener_knob([0,-11,0]);
+	//	rotate([-90,0,0])tightener_knob([0,belt_z_pos,15]);
 		belt_tightener([0,-17,0]);
+
 
 		//some helpers to visualize belts and bearings
 		for(i= [-1,1])for(j= [0,1]) 
