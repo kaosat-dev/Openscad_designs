@@ -3,6 +3,8 @@ include <MCAD/stepper.scad>
 include <MCAD/bearing.scad>
 include <MCAD/nuts_and_bolts.scad>
 
+
+////////////X ENDS
 //TODO: adjust lateral mount bolt head size for x ends -->DONE
 //TODO: enlarge y bearinjg and x rods holes slightly-->DONE
 //TODO: adjust belt notch height based on correct washer height-->DONE
@@ -10,6 +12,10 @@ include <MCAD/nuts_and_bolts.scad>
 //TODO : check x arm offset extra -->DONE
 //TODO : modify parametrization of belt bearing holder-->DONE
 //TODO: fix x_ends left right/ front back logic-->DONE
+////////////X CARRIAGE
+//TODO: fix payload mount holes distance to border
+//TODO : fix belt idler (front) hole size
+//TODO: fix tightening mechanism?
 ///////////////////////////////
 // USER PARAMETERS
 ///////////////////////////////
@@ -77,6 +83,8 @@ LEFT="left";
 RIGHT="right";
 BOTH = "both";
 
+TIGHTENER="tght";
+
 //for mount holes module
 CAP = "cap";
 NUT = "nut";
@@ -104,7 +112,9 @@ STRUCT_COLOR =[ 0.95, 0.95, 0.95];
 
 //foot();
 
-x_carriage();
+//x_carriage();
+x_carriage(side=RIGHT);
+//translate([0,50,0])x_carriage(side=RIGHT);
 ///////////////////////////////
 // OpenSCAD SCRIPT
 ////////////////////////////////
@@ -251,8 +261,8 @@ module doboz()
 
 	for(i= [-1,1]) for(j= [-1,0])  mirror([0,j,0]) y_end2([y_rods_dist/2*i ,machine_length/2-2*angle_extrusions_thickness-15,y_rods_z_dist]);
 	
-	translate([-x_platform_width/2,-x_platform_length/2,x_rods_z_dist-x_platform_height/2])
-	x_carriage(x_rods_bearing_dia, x_rods_dist,x_platform_width,x_platform_length,x_platform_height);
+	translate([0,0,x_rods_z_dist])
+	x_carriage();
 
 
 	for(i= [-1,1])
@@ -483,7 +493,7 @@ module y_end2(pos=[0,0,0], rod_dia=8, width=48, length=6, height=25, holder_leng
 	}
 }
 
-module x_carriage(bearing_id=8, rod_dist=30, width=40, length=30, height=50, bearing_dia=15, bearing_length=24, bearing_cap_id=14.5, num_bearings=2, belt_width=6, belt_thickness=1.5, walls_thickness=4, side=LEFT)
+module x_carriage(bearing_id=8, rod_dist=30, width=40, length=30, height=50, bearing_dia=15, bearing_length=24, bearing_cap_id=14.5, belt_width=6, belt_thickness=1.5, walls_thickness=4, side=BOTH)
 {
 
 	//TODO: cleanup
@@ -499,7 +509,6 @@ module x_carriage(bearing_id=8, rod_dist=30, width=40, length=30, height=50, bea
 	end_caps_length= 0.7;//for bearing retaining
 	block_width =(bearing_length+end_caps_length)*2;
 
-	width = max(bearing_length *num_bearings,width);
 	length = walls_thickness*2+bearing_dia;
 
 	
@@ -514,6 +523,8 @@ module x_carriage(bearing_id=8, rod_dist=30, width=40, length=30, height=50, bea
 
 	//extra elements
 	payload_holes_dist=[20,25]; //[x,y]
+
+	cutoff_dims=[block_width, length+50 ,height+10];
 	
 
 	
@@ -598,9 +609,8 @@ module x_carriage(bearing_id=8, rod_dist=30, width=40, length=30, height=50, bea
 		belt_block_length = belt_thickness + 3*2;
 		belt_block_height= belt_width+3*2;
 
-		
 		front_extra=7; ///needed to allow passage for belt
-		front_trench_dia=13;
+		front_trench_dia=15;
 		back_trench_length=7;//for belt attachment inset
 
 
@@ -653,10 +663,9 @@ module x_carriage(bearing_id=8, rod_dist=30, width=40, length=30, height=50, bea
 						hull()
 						{
 							translate([0,-front_thickness])square([front_trench_dia,5],center=true);
-							translate([0,-front_trench_dia/2+0]) scale (v=[1,0.7,1]) circle(r = front_trench_dia/2);
+							translate([0,-front_trench_dia/2+0]) scale (v=[1,0.5,1]) circle(r = front_trench_dia/2);
 						}
 					}	
-
 
 
 				//back belt hole
@@ -693,42 +702,45 @@ module x_carriage(bearing_id=8, rod_dist=30, width=40, length=30, height=50, bea
 				for(i= [-1,1]) for(j= [-1,1])
 				translate([payload_holes_dist[0]*i,9,j*payload_holes_dist[1]]) rotate([90,0,0])mount_hole(length=block_width+xtra);
 				
-		
-
 			}
 		}
 	}
 
+
+
 	color(MECHA_COLOR)
 	{
-		difference()
-		{
-
-		union()
-		{
-			//mount_hole();
-			bearing_holder();
-			rotate([-90,0,0])tightener_knob([0,0,-30]);
+		
+		//translate(pos)
+		/*%rotate([-90,0,0])tightener_knob([0,0,-30]);
 			%belt_tightener([0,-11,0]);//0,-12,0
-			
-			%belt_tightener([0,11,0]);
-
+			belt_tightener([0,11,0]);
 			//some helpers to visualize belts and bearings
 			for(i= [-1,1])for(j= [0,1]) 
 			%bearing(pos=[80*j-40,belt_bearings_y_dist/2*i,-belt_bearing_dims[2] /2], model=624, outline=false);
 			translate([0,-belt_bearings_y_dist/2+belt_bearing_dims[2]+belt_thickness*1.5,0]) %cube([200,belt_thickness,belt_width], center=true);
-
-			translate([0,belt_bearings_y_dist/2-belt_bearing_dims[2]-belt_thickness*1.5,0]) %cube([200,belt_thickness,belt_width], center=true);
-		}
+			translate([0,belt_bearings_y_dist/2-belt_bearing_dims[2]-belt_thickness*1.5,0]) %cube([200,belt_thickness,belt_width], center=true);*/
 		if (side == LEFT)
 		{
-			translate([0,-(length+50)/2,-(height+50)/2]) cube([width+10, length+50, height+50]);
+			rotate([0,90,0]) translate([-block_width/2,0,0])
+			difference()
+			{bearing_holder(); translate([-cutoff_dims[0]/2,0,0]) cube(cutoff_dims,center=true);}
 		}
 		else if (side == RIGHT)
 		{
-
+			rotate([0,-90,0]) translate([block_width/2,0,0]) rotate([180,0,0]) 
+			difference()
+			{bearing_holder(); translate([cutoff_dims[0]/2,0,0]) cube(cutoff_dims,center=true);}
 		}
-	}
+		else if(side==TIGHTENER)
+		{
+			rotate([90,0,0])  belt_tightener([0,11,0]);
+		}
+		else
+		{
+			mirror([0,1,0]) bearing_holder();
+		}
+	
 	}
 
 	
